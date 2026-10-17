@@ -4,23 +4,26 @@ All notable changes to `bitshost/upmvc-payments-pack`.
 
 ## [Unreleased]
 
-### v1.0.0 — Scaffold (payments contracts)
+### Drivers expansion
 
-Initial public skeleton. Separate from `upmvc-saas-pack` by design.
+- **`CashGateway`** — cash / COD; pending until staff confirms
+- **`BankTransferGateway`** — wire transfer; IBAN instructions from `PAYMENTS_BANK_*`
+- **`StripeGateway`** — PaymentIntent create/retrieve + webhook parse when `stripe/stripe-php` is installed; clear error if missing
+- **`PayPalGateway`** — stub with clear missing-SDK / not-wired errors; `suggest` paypal-server-sdk
+- **`GatewayResolver`** — registers all built-ins; `available()` list
+- **API** — optional `driver` on create; `GET /api/payments/drivers`; `PATCH /api/payments/{id}/status` for offline confirm
+
+## [0.1.0] — Scaffold
+
+Initial public skeleton (separate from `upmvc-saas-pack`).
 
 #### Added
-- **`BitsHost\UpmvcPayments\PaymentsServiceProvider`** — module + migration paths
-- **`Gateway\PaymentGatewayInterface`**, **`ManualGateway`**, **`GatewayResolver`**
-- **`PaymentRecord`** — tenant-scoped persistence helper
-- **Migration `001_payments_layer.sql`** — `payment_intents`
-- **API** `POST /api/payments`, `GET /api/payments/{id}` (JWT + tenant)
-- **Docs** — README, `docs/01-architecture.md`, `AGENTS.md`
-- **Tests** — `PaymentsKernelTest` (manual driver + migration guard)
+- **`PaymentsServiceProvider`**, **`PaymentGatewayInterface`**, **`ManualGateway`**, **`GatewayResolver`**
+- **`PaymentRecord`** + migration **`001_payments_layer.sql`**
+- Thin API `POST/GET /api/payments`
+- Docs, CI, unit tests
 
 #### Requires
 - PHP >= 8.1
 - `bitshost/upmvc` ^2.4
 - `bitshost/upmvc-saas-pack` ^1.1
-
-#### Not in v1
-- Stripe / PayPal drivers, webhooks, refunds, subscription engine, checkout UI

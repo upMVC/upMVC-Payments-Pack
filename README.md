@@ -2,33 +2,35 @@
 
 Installable payments pack for upMVC SaaS apps (`bitshost/upmvc-payments-pack`).
 
-**Separate from** [`upmvc-saas-pack`](https://github.com/upMVC/upMVC-SaaS-Pack) (tenancy + Harvest ops). Payments pull vendor SDKs, webhooks, and refunds — optional per product.
+**Separate from** [`upmvc-saas-pack`](https://github.com/upMVC/upMVC-SaaS-Pack) (tenancy + Harvest ops).
 
 ## Architecture
 
 ```text
 bitshost/upmvc                 → kernel
-bitshost/upmvc-saas-pack       → tenancy + Harvest (mail, notify, audit, MFA)
-bitshost/upmvc-payments-pack   → this pack (gateway contracts + payment_intents)
+bitshost/upmvc-saas-pack       → tenancy + Harvest
+bitshost/upmvc-payments-pack   → this pack
 host app                       → domain pricing / “what to charge”
 ```
 
-## v1.0 scope
+## Drivers (v1)
 
-| Ships | Does not ship (yet) |
-|-------|---------------------|
-| `PaymentGatewayInterface` + `ManualGateway` | Stripe / PayPal drivers |
-| `GatewayResolver` (`PAYMENTS_DRIVER`) | Subscription billing engine |
-| `PaymentRecord` + migration `001_payments_layer.sql` | Invoices / tax / dunning |
-| Thin API `POST/GET /api/payments` | Checkout UI |
-| `PaymentsServiceProvider` | Product-specific price rules |
+| Driver | Composer | Behavior |
+|--------|----------|----------|
+| `manual` | — | Generic offline pending |
+| `cash` | — | Cash / COD — pending until staff marks succeeded |
+| `bank_transfer` | — | Wire transfer — pending + IBAN instructions from `.env` |
+| `stripe` | `composer require stripe/stripe-php` | PaymentIntent + webhook parse when SDK present |
+| `paypal` | `composer require paypal/paypal-server-sdk` | Stub until Order/Capture wired — clear error if SDK missing |
+
+**Do not** hard-require Stripe/PayPal in this pack — apps that only need cash/bank stay lean.
 
 ## Install
 
-Requires **upMVC ^2.4** and **upmvc-saas-pack ^1.1**.
-
 ```bash
 composer require bitshost/upmvc-payments-pack
+# optional:
+composer require stripe/stripe-php
 ```
 
 ```php
@@ -39,49 +41,48 @@ return [
 ];
 ```
 
-`.env`:
+### `.env`
 
 ```env
 PAYMENTS_DRIVER=manual
+# PAYMENTS_DRIVER=cash
+# PAYMENTS_DRIVER=bank_transfer
+# PAYMENTS_DRIVER=stripe
+
+# bank_transfer
+PAYMENTS_BANK_IBAN=
+PAYMENTS_BANK_BIC=
+PAYMENTS_BANK_BENEFICIARY=
+PAYMENTS_BANK_NAME=
+
+# stripe (only if driver=stripe)
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
 ```
 
 Run host migrations (kernel → saas-pack → payments-pack → app).
 
-## Usage
+## API
+
+| Method | Path | Role |
+|--------|------|------|
+| GET | `/api/payments/drivers` | List built-in drivers |
+| POST | `/api/payments` | Create intent (`amount_cents`, `currency`, optional `driver`) |
+| GET | `/api/payments/{id}` | Show (tenant-scoped) |
+| PATCH | `/api/payments/{id}/status` | Staff confirm offline (`status=succeeded` etc.) |
+
+## Library usage
 
 ```php
 use BitsHost\UpmvcPayments\Gateway\GatewayResolver;
 use BitsHost\UpmvcPayments\PaymentRecord;
 
-$gateway = GatewayResolver::driver(); // manual | (later) stripe
-$result  = $gateway->createPayment([
-    'tenant_id'    => $tenantId,
-    'amount_cents' => 1999,
-    'currency'     => 'EUR',
-    'description'  => 'Invoice #42',
-]);
-
-PaymentRecord::create([
-    'tenant_id'    => $tenantId,
-    'amount_cents' => 1999,
-    'currency'     => 'EUR',
-    'driver'       => $gateway->name(),
-    'status'       => $result['status'],
-    'provider_ref' => $result['provider_ref'],
-]);
+$gateway = GatewayResolver::driver('bank_transfer'); // or null → PAYMENTS_DRIVER
+$result  = $gateway->createPayment([/* … */]);
 ```
-
-Or call `POST /api/payments` with JWT (`amount_cents`, `currency`).
-
-## Next (roadmap)
-
-1. `StripeGateway` behind the same interface (+ `stripe/stripe-php` suggest)
-2. Webhook route + signature verify
-3. Refund helper
-4. Optional: platform vs tenant processor credentials (plan-gated)
 
 ## Docs
 
 - [`docs/01-architecture.md`](docs/01-architecture.md)
-- [`AGENTS.md`](AGENTS.md) — agent pointer
+- [`AGENTS.md`](AGENTS.md)
 - [`CHANGELOG.md`](CHANGELOG.md)

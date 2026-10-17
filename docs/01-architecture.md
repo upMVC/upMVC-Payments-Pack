@@ -8,36 +8,50 @@
 
 | Layer | Owns |
 |-------|------|
-| **This pack** | Gateway contract, drivers, `payment_intents` persistence, thin create/show API |
-| **saas-pack** | `tenant_id`, JWT, plans/features (e.g. gate custom processors later) |
-| **Host app** | What to charge for (invoices, bookings, subscriptions domain), UI, success/cancel URLs |
+| **This pack** | Gateway contract, drivers, `payment_intents`, thin APIs |
+| **saas-pack** | `tenant_id`, JWT, plans/features |
+| **Host app** | What to charge for, UI, success/cancel URLs |
 
 ## Driver model
 
 ```
-GatewayResolver::driver()
-    → ManualGateway     (v1 — offline / pending)
-    → StripeGateway     (planned)
-    → …
+GatewayResolver::driver($name?)
+    → ManualGateway
+    → CashGateway              (offline — staff mark-paid)
+    → BankTransferGateway      (offline — IBAN from .env)
+    → StripeGateway            (optional stripe/stripe-php)
+    → PayPalGateway            (optional paypal SDK — wiring TBD)
 ```
 
-Apps and API controllers talk only to `PaymentGatewayInterface`. Register extra drivers with `GatewayResolver::register('stripe', fn() => new StripeGateway())`.
+Apps talk only to `PaymentGatewayInterface`. Register extra drivers with `GatewayResolver::register(...)`.
 
-## Data
+### Optional Composer SDKs
 
-`payment_intents` is always scoped by `tenant_id` (FK → `tenants`). Status vocabulary (informative): `pending`, `requires_action`, `succeeded`, `failed`, `canceled`, `refunded`.
+```bash
+composer require stripe/stripe-php          # StripeGateway
+composer require paypal/paypal-server-sdk   # PayPalGateway (when ready)
+```
+
+If the SDK is missing, the driver throws a **clear** `RuntimeException` with the `composer require …` hint — it does not fatally load at boot.
+
+### Offline flow
+
+1. `POST /api/payments` with `driver=cash` or `bank_transfer` → status `pending`  
+2. Show `raw.instructions` / bank details to the customer  
+3. Staff `PATCH /api/payments/{id}/status` `{ "status": "succeeded" }` when money is received  
+
+Card processors should prefer webhooks later (`parseWebhook` on Stripe is ready once `STRIPE_WEBHOOK_SECRET` is set).
 
 ## Env
 
-| Key | Default | Meaning |
-|-----|---------|---------|
-| `PAYMENTS_DRIVER` | `manual` | Active gateway name |
+| Key | Meaning |
+|-----|---------|
+| `PAYMENTS_DRIVER` | Default driver (`manual`, `cash`, `bank_transfer`, `stripe`, `paypal`) |
+| `PAYMENTS_BANK_*` | IBAN / BIC / beneficiary / bank name for `bank_transfer` |
+| `STRIPE_SECRET_KEY` | Stripe secret |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | Reserved for PayPal wiring |
 
-Stripe keys (future) stay host-only — never committed.
+## Data
 
-## Wire-up
-
-1. Require pack + saas-pack  
-2. Register `PaymentsServiceProvider` after `SaasServiceProvider`  
-3. Migrate `001_payments_layer.sql`  
-4. Call library API or `/api/payments`
+`payment_intents` is always scoped by `tenant_id`. Statuses: `pending`, `requires_action`, `succeeded`, `failed`, `canceled`, `refunded`.

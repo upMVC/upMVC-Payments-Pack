@@ -35,8 +35,10 @@ class Controller extends SaasApiController
             return;
         }
 
+        $driverName = isset($body['driver']) ? (string) $body['driver'] : null;
+
         try {
-            $gateway = GatewayResolver::driver();
+            $gateway = GatewayResolver::driver($driverName);
             $result = $gateway->createPayment([
                 'tenant_id'      => $tenantId,
                 'amount_cents'   => $amount,
@@ -67,6 +69,7 @@ class Controller extends SaasApiController
             'provider_ref'  => $result['provider_ref'] ?? null,
             'client_secret' => $result['client_secret'] ?? null,
             'driver'        => $gateway->name(),
+            'raw'           => $result['raw'] ?? null,
         ], 201);
     }
 
@@ -85,5 +88,46 @@ class Controller extends SaasApiController
         }
 
         $this->success(['payment' => $row]);
+    }
+
+    /**
+     * Mark offline payments (cash / bank_transfer / manual) as paid or canceled.
+     * Card processors should prefer webhooks — this is for staff confirmation.
+     */
+    public function updateStatus(int $id): void
+    {
+        $tenantId = (int) ($this->user['tenant_id'] ?? 0);
+        if ($tenantId < 1) {
+            $this->error('Tenant context required', 403);
+            return;
+        }
+
+        $body = $this->body();
+        $this->requireFields($body, ['status']);
+        $status = strtolower((string) $body['status']);
+        $allowed = ['pending', 'succeeded', 'failed', 'canceled', 'refunded'];
+        if (!in_array($status, $allowed, true)) {
+            $this->error('Invalid status', 422);
+            return;
+        }
+
+        $row = PaymentRecord::findForTenant($tenantId, $id);
+        if ($row === null) {
+            $this->error('Not found', 404);
+            return;
+        }
+
+        if (!PaymentRecord::updateStatus($tenantId, $id, $status)) {
+            $this->error('Update failed', 500);
+            return;
+        }
+
+        $fresh = PaymentRecord::findForTenant($tenantId, $id);
+        $this->success(['payment' => $fresh]);
+    }
+
+    public function drivers(): void
+    {
+        $this->success(['drivers' => GatewayResolver::available()]);
     }
 }

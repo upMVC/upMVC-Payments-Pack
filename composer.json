@@ -14,7 +14,8 @@
         "phpstan/phpstan": "^1.10"
     },
     "suggest": {
-        "stripe/stripe-php": "Install when using the Stripe driver (planned)."
+        "stripe/stripe-php": "Required only when PAYMENTS_DRIVER=stripe (StripeGateway).",
+        "paypal/paypal-server-sdk": "Required only when PAYMENTS_DRIVER=paypal (PayPalGateway — Order/Capture wiring in progress)."
     },
     "authors": [
         {

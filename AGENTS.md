@@ -20,9 +20,11 @@ Installable **payments** pack for upMVC SaaS apps — not the tenancy/ops pack, 
 ## Must
 
 1. Keep provider SDKs (Stripe, PayPal, …) behind `PaymentGatewayInterface` drivers — do not hard-wire one vendor into the pack core.
-2. Scope every payment row with `tenant_id` (SaaS shared-DB model).
-3. Secrets (API keys) stay in host `.env` / sealed settings — never commit live keys.
-4. Do not merge payments into `upmvc-saas-pack` — different risk and optional dependency.
+2. Stripe/PayPal stay in Composer **`suggest`**, not hard `require` — cash/bank apps must stay lean.
+3. Scope every payment row with `tenant_id` (SaaS shared-DB model).
+4. Secrets (API keys, IBAN is less sensitive but still host `.env`) — never commit live keys.
+5. Do not merge payments into `upmvc-saas-pack` — different risk and optional dependency.
+6. Offline drivers (`cash`, `bank_transfer`, `manual`) stay `pending` until staff `PATCH …/status`.
 
 ## Never
 
