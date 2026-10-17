@@ -1,0 +1,27 @@
+{
+  "id": "payments",
+  "name": "upMVC Payments Pack",
+  "composer": "bitshost/upmvc-payments-pack",
+  "provider": "BitsHost\\UpmvcPayments\\PaymentsServiceProvider",
+  "optional": true,
+  "env_keys": [
+    "PAYMENTS_DRIVER",
+    "PAYMENTS_BANK_IBAN",
+    "PAYMENTS_BANK_BIC",
+    "PAYMENTS_BANK_BENEFICIARY",
+    "PAYMENTS_BANK_NAME",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET"
+  ],
+  "migrations": true,
+  "docs": [
+    "docs/01-architecture.md",
+    "README.md"
+  ],
+  "agent_hints": [
+    "Keep Stripe/PayPal SDKs optional (composer suggest) — cash/bank apps stay lean",
+    "Use GatewayResolver / PaymentGatewayInterface — never call Stripe from domain code",
+    "Offline drivers (cash, bank_transfer, manual) stay pending until staff PATCH status",
+    "Product owns what to charge for; pack owns payment_intents + drivers"
+  ]
+}

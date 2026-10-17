@@ -81,6 +81,15 @@ $gateway = GatewayResolver::driver('bank_transfer'); // or null → PAYMENTS_DRI
 $result  = $gateway->createPayment([/* … */]);
 ```
 
+## Compose discovery
+
+This pack ships **`saas-kit.json`** so host `saas-next` (from saas-pack) can see payments as an optional layer:
+
+```bash
+php vendor/bitshost/upmvc-saas-pack/bin/saas-next.php packs
+php vendor/bitshost/upmvc-saas-pack/bin/saas-next.php doctor
+```
+
 ## Docs
 
 - [`docs/01-architecture.md`](docs/01-architecture.md)

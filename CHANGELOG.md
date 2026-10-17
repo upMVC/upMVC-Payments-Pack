@@ -4,6 +4,9 @@ All notable changes to `bitshost/upmvc-payments-pack`.
 
 ## [Unreleased]
 
+### Compose
+- **`saas-kit.json`** — optional-pack manifest for `saas-next` discovery (env keys, provider, agent hints)
+
 ### Drivers expansion
 
 - **`CashGateway`** — cash / COD; pending until staff confirms
