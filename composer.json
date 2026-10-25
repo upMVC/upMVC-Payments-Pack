@@ -5,7 +5,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.3",
         "bitshost/upmvc": "^2.4",
         "bitshost/upmvc-saas-pack": "^1.1"
     },

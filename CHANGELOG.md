@@ -4,6 +4,9 @@ All notable changes to `bitshost/upmvc-payments-pack`.
 
 ## [Unreleased]
 
+### Changed
+- **PHP floor raised to `>=8.3`** — Composer + CI (`8.3` / `8.4`). Aligns with kernel and saas-pack.
+
 ### Compose
 - **`saas-kit.json`** — optional-pack manifest for `saas-next` discovery (env keys, provider, agent hints)
 
@@ -27,6 +30,6 @@ Initial public skeleton (separate from `upmvc-saas-pack`).
 - Docs, CI, unit tests
 
 #### Requires
-- PHP >= 8.1
+- PHP >= 8.3 (current line; was >= 8.1 at 0.1.0 scaffold)
 - `bitshost/upmvc` ^2.4
 - `bitshost/upmvc-saas-pack` ^1.1
