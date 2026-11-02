@@ -6,7 +6,7 @@
     "prefer-stable": true,
     "require": {
         "php": ">=8.3",
-        "bitshost/upmvc": "^2.4",
+        "bitshost/upmvc": "^2.5",
         "bitshost/upmvc-saas-pack": "^1.1"
     },
     "require-dev": {
