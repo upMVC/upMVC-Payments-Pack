@@ -4,8 +4,11 @@ All notable changes to `bitshost/upmvc-payments-pack`.
 
 ## [Unreleased]
 
+## [0.2.1] — PHPStan 2 + composer check (2026-11-26)
+
 ### Changed
 - **QA** — PHPStan `^2.2`; Composer scripts `test` / `analyse` / `check`.
+- Stripe/PayPal gateways call optional SDKs via helpers so analysis works without those packages installed.
 
 ## [0.2.0] — Drivers + saas-kit + PHP 8.3 (2026-11-02)
 
