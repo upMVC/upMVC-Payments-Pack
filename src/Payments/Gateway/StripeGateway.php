@@ -27,13 +27,8 @@ final class StripeGateway implements PaymentGatewayInterface
             throw new \RuntimeException('STRIPE_SECRET_KEY is not set in the environment');
         }
 
-        /** @var class-string $stripe */
-        $stripe = 'Stripe\\Stripe';
-        $stripe::setApiKey($secret);
-
-        /** @var class-string $paymentIntent */
-        $paymentIntent = 'Stripe\\PaymentIntent';
-        $intent = $paymentIntent::create([
+        $this->callStripe('Stripe\\Stripe', 'setApiKey', [$secret]);
+        $intent = $this->callStripe('Stripe\\PaymentIntent', 'create', [[
             'amount'   => (int) $input['amount_cents'],
             'currency' => strtolower((string) $input['currency']),
             'metadata' => array_merge(
@@ -43,7 +38,7 @@ final class StripeGateway implements PaymentGatewayInterface
             'description'   => $input['description'] ?? null,
             'receipt_email' => $input['customer_email'] ?? null,
             'automatic_payment_methods' => ['enabled' => true],
-        ]);
+        ]]);
 
         return [
             'status'        => (string) ($intent->status ?? 'requires_action'),
@@ -65,13 +60,8 @@ final class StripeGateway implements PaymentGatewayInterface
             throw new \RuntimeException('STRIPE_SECRET_KEY is not set in the environment');
         }
 
-        /** @var class-string $stripe */
-        $stripe = 'Stripe\\Stripe';
-        $stripe::setApiKey($secret);
-
-        /** @var class-string $paymentIntent */
-        $paymentIntent = 'Stripe\\PaymentIntent';
-        $intent = $paymentIntent::retrieve($providerRef);
+        $this->callStripe('Stripe\\Stripe', 'setApiKey', [$secret]);
+        $intent = $this->callStripe('Stripe\\PaymentIntent', 'retrieve', [$providerRef]);
 
         return [
             'status'       => (string) ($intent->status ?? 'unknown'),
@@ -80,7 +70,7 @@ final class StripeGateway implements PaymentGatewayInterface
         ];
     }
 
-    public function parseWebhook(string $payload, array $headers): ?array
+    public function parseWebhook(string $payload, array $headers): array
     {
         $this->assertSdk();
         $whSecret = $this->env('STRIPE_WEBHOOK_SECRET');
@@ -92,9 +82,7 @@ final class StripeGateway implements PaymentGatewayInterface
             $sig = (string) ($sig[0] ?? '');
         }
 
-        /** @var class-string $webhook */
-        $webhook = 'Stripe\\Webhook';
-        $event = $webhook::constructEvent($payload, (string) $sig, $whSecret);
+        $event = $this->callStripe('Stripe\\Webhook', 'constructEvent', [$payload, (string) $sig, $whSecret]);
         $obj = $event->data->object ?? null;
         $ref = is_object($obj) && isset($obj->id) ? (string) $obj->id : null;
         $status = is_object($obj) && isset($obj->status) ? (string) $obj->status : null;
@@ -109,11 +97,32 @@ final class StripeGateway implements PaymentGatewayInterface
 
     private function assertSdk(): void
     {
-        if (!class_exists('Stripe\\Stripe')) {
+        if (!$this->classAvailable('Stripe\\Stripe')) {
             throw new \RuntimeException(
                 'Stripe SDK missing. Run: composer require stripe/stripe-php'
             );
         }
+    }
+
+    /**
+     * Dynamic static call so analysis does not require stripe/stripe-php in require-dev.
+     *
+     * @param list<mixed> $args
+     */
+    private function callStripe(string $class, string $method, array $args = []): mixed
+    {
+        if (!$this->classAvailable($class)) {
+            throw new \RuntimeException(
+                'Stripe SDK missing. Run: composer require stripe/stripe-php'
+            );
+        }
+
+        return $class::$method(...$args);
+    }
+
+    private function classAvailable(string $class): bool
+    {
+        return class_exists($class);
     }
 
     private function secretKey(): string

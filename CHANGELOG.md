@@ -4,6 +4,9 @@ All notable changes to `bitshost/upmvc-payments-pack`.
 
 ## [Unreleased]
 
+### Changed
+- **QA** — PHPStan `^2.2`; Composer scripts `test` / `analyse` / `check`.
+
 ## [0.2.0] — Drivers + saas-kit + PHP 8.3 (2026-11-02)
 
 Requires **PHP 8.3+**, **upMVC ^2.4** (2.6+ on Packagist), **saas-pack ^1.1** (1.2+ recommended).

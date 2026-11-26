@@ -47,12 +47,17 @@ final class PayPalGateway implements PaymentGatewayInterface
             'PayPal\\Rest\\ApiContext',
         ];
         foreach ($candidates as $class) {
-            if (class_exists($class)) {
+            if ($this->classAvailable($class)) {
                 return;
             }
         }
         throw new \RuntimeException(
             'PayPal SDK missing. Run: composer require paypal/paypal-server-sdk'
         );
+    }
+
+    private function classAvailable(string $class): bool
+    {
+        return class_exists($class);
     }
 }
