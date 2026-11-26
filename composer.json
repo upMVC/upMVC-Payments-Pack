@@ -11,7 +11,7 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^11.0",
-        "phpstan/phpstan": "^1.10"
+        "phpstan/phpstan": "^2.2"
     },
     "suggest": {
         "stripe/stripe-php": "Required only when PAYMENTS_DRIVER=stripe (StripeGateway).",
@@ -46,5 +46,13 @@
         "stripe",
         "multi-tenant"
     ],
-    "homepage": "https://upmvc.com"
+    "homepage": "https://upmvc.com",
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse --no-progress",
+        "check": [
+            "@analyse",
+            "@test"
+        ]
+    }
 }
